@@ -1,1 +1,0 @@
-# Plaintext-based YARA Rules
