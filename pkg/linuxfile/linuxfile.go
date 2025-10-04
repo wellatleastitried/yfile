@@ -1,53 +1,88 @@
 package linuxfile
 
 import (
-    "encoding/csv"
     "fmt"
-    "strings"
     "errors"
+    "strings"
     "os"
+    "os/exec"
 )
 
-type Command struct {
+type CommandData struct {
     Name string
-    Args []string
     FilePath string
 }
 
-var ArgumentParsingError = errors.New("Unable to parse arguments provided to `file` command")
+type CommandDataWithArgs struct {
+    Name string
+    Args string
+    FilePath string
+}
 
-func NewCommand(filePath *string, commandArgs *string) Command {
-    args, err := parseCommandArgs(commandArgs)
-    if err != nil {
-        fmt.Fprintln(os.Stderr, err)
+var NoArgumentsProvidedToFileArgsFlag = errors.New("The `file-args` flag was provided but no arguments were passed to it.")
+var FilePathProvidedInArguments = errors.New("In yfile, the file path can only be provided with the -f flag. It cannot reside within the -file-args.")
+
+func NewCommand(filePath *string) CommandData {
+    return CommandData {
+        Name: "file",
+        FilePath: *filePath,
+    }
+}
+
+func NewCommandWithArgs(filePath *string, commandArgs *string) (CommandDataWithArgs, error) {
+    if commandArgsAreValid(commandArgs) {
+        return CommandDataWithArgs {
+            Name: "file",
+            Args: *commandArgs,
+            FilePath: *filePath,
+        }, nil
+    } else {
+        return CommandDataWithArgs{}, FilePathProvidedInArguments
+    }
+}
+
+func commandArgsAreValid(commandArgs *string) bool {
+    args := strings.Split(*commandArgs, " ")
+    fileExpected := false
+    for _, arg := range args {
+        if fileExpected {
+            fileExpected = false
+            continue
+        }
+        if strings.HasPrefix(arg, "-m") || strings.Contains(arg, "--magic-file") || strings.Contains(arg, "-f") || strings.Contains(arg, "--files-from") {
+            fileExpected = true
+            continue
+        }
+        if !strings.HasPrefix(arg, "-") || strings.Contains(arg, "/") || strings.Contains(arg, ".") {
+            return false
+        }
+    }
+    return true
+}
+    
+
+func (c CommandData) Execute() {
+    cmd := exec.Command(c.Name, c.FilePath)
+    execute(cmd)
+}
+
+func (c CommandDataWithArgs) Execute() {
+    if c.Args == "" {
+        fmt.Fprintln(os.Stderr, NoArgumentsProvidedToFileArgsFlag)
         os.Exit(1)
     }
 
-    command := Command {
-        Name: "file",
-        Args: args,
-        FilePath: *filePath,
-    }
-
-    return command
+    cmd := exec.Command(c.Name, c.Args, c.FilePath)
+    execute(cmd)
 }
 
-func parseCommandArgs(commandArgs *string) ([]string, error) {
-    if *commandArgs == "" {
-        return []string{}, nil
-    }
-
-    r := csv.NewReader(strings.NewReader(*commandArgs))
-    r.Comma = ' '
-    fields, err := r.Read()
+func execute(cmd *exec.Cmd) {
+    stdout, err := cmd.Output()
     if err != nil {
-        return []string{}, ArgumentParsingError
+        fmt.Fprintf(os.Stderr, "%v", err)
+        os.Exit(1)
     }
 
-    return fields, nil
-}
-
-func (c Command) Execute() {
-    fmt.Println("Executing command...")
+    fmt.Fprintf(os.Stdout, "%s", string(stdout))
 }
 

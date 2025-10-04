@@ -23,3 +23,6 @@ pull:
     branch=$(git rev-parse --abbrev-ref HEAD)
     git pull origin "$branch"
 
+get url:
+    go get "{{url}}"
+    go mod tidy

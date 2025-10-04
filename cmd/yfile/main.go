@@ -13,26 +13,31 @@ import (
     "github.com/wellatleastitried/yfile/pkg/linuxfile"
 )
 
-// Parse args and kick off processes
 // Args should pass through to the `file` command and just have a few addons for `yfile` specific stuff
 func main() {
-    filePath := flag.String("file", "", "Path to the file to analyze (required)")
-    fileCommandArgs := flag.String("file-args", "", "Arguments to pass to the `file` command (e.g. '-b -i')")
+    filePath := flag.String("f", "", "Path to the file to analyze (required)")
+    fileCommandArgs := flag.String("file-args", "", "Arguments to pass through to the `file` command (e.g. '-b -i')")
 
     flag.Parse()
 
     verifyFilePath(filePath)
-    cmd := linuxfile.NewCommand(filePath, fileCommandArgs)
-    cmd.Execute()
+
+    if *fileCommandArgs != "" {
+        cmd, err := linuxfile.NewCommandWithArgs(filePath, fileCommandArgs)
+        if err != nil {
+            fmt.Fprintln(os.Stderr, "[Error] -file-args flag is invalid:", err)
+            os.Exit(1)
+        }
+        cmd.Execute()
+    } else {
+        cmd := linuxfile.NewCommand(filePath)
+        cmd.Execute()
+    }
 
     // TODO: Replace this with actually kicking off detection and analysis
-    _, err := fmt.Fprintf(os.Stdout, "[Success] Your file is '%s'\n", *filePath)
-    if err != nil {
-        fmt.Printf("[Error] An error occurred while writing to stdout: %v\n", err)
-        os.Exit(1)
-    }
 }
 
+// TODO: Make this support multiple files
 func verifyFilePath(filePath *string) {
     if *filePath == "" {
         fmt.Fprintln(os.Stderr, "[Error] -file flag is required")
