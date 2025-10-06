@@ -11,7 +11,7 @@ lint:
     editorconfig-checker
 
 dev-setup:
-    go install github.com/golangci/golangci-lint/cmd/golangci-lint@1.64.8
+    go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
     go install github.com/editorconfig-checker/editorconfig-checker/cmd/editorconfig-checker@latest
 
 push msg:

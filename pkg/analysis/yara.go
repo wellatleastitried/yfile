@@ -3,7 +3,12 @@ package analysis
 import (
     "fmt"
 
-    //"github.com/hillu/go-yara/v4"
+    "github.com/hillu/go-yara/v4"
+)
+
+const (
+    // Change to something more permanent like /usr/local/share/yara or similar
+    YaraRulesPath = "./rules/index_all.yar"
 )
 
 type Match struct {
@@ -22,3 +27,4 @@ type Result struct {
 func ImportYaraRules() {
     fmt.Println("Importing Yara rules...")
 }
+
