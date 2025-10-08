@@ -1,2 +1,3 @@
 tmp/
 build/
+pkg/scanning/matcher/ruleset.compiled

@@ -7,6 +7,8 @@ Reimplementation of the "file" command with yara rules to scan for malware signa
 
 ### Development
 - `just`
+- `yara`
+- `libyara-dev`
 
 ## Installation
 
@@ -17,7 +19,15 @@ Reimplementation of the "file" command with yara rules to scan for malware signa
 `git clone --recurse-submodules https://github.com/wellatleastitried/yfile.git`
 
 2. Run `just`
-`just build`
+```bash
+just build`
+```
 
 3. The binary can be ran from:
-`./build/yfile`
+```bash
+./build/yfile
+```
+or installed to `/usr/local/bin` with:
+```bash
+sudo just install
+```

@@ -6,22 +6,22 @@ import (
     "github.com/stretchr/testify/require"
 )
 
-const SHOULD_PASS = true
-const SHOULD_FAIL = false
+const ShouldPass = true
+const ShouldFail = false
 
-const WANT_ERR = true
-const NO_ERR = false
+const WantErr = true
+const NoErr = false
 
 func TestArgumentParsing(t *testing.T) {
     tests := []struct {
         input    string
         expected bool
     }{
-        {"--help", SHOULD_PASS},
-        {"--magic-file /tmp/testfile1:/tmp/testfile2", SHOULD_PASS},
-        {"--mime-type --keep-going --print0 --list", SHOULD_PASS},
-        {"--mime-type ./README.md", SHOULD_FAIL},
-        {"/tmp/testfile1", SHOULD_FAIL},
+        {"--help", ShouldPass},
+        {"--magic-file /tmp/testfile1:/tmp/testfile2", ShouldPass},
+        {"--mime-type --keep-going --print0 --list", ShouldPass},
+        {"--mime-type ./README.md", ShouldFail},
+        {"/tmp/testfile1", ShouldFail},
     }
 
     for _, tt := range tests {
@@ -32,14 +32,3 @@ func TestArgumentParsing(t *testing.T) {
     }
 }
 
-func stringSlicesEqual(a, b []string) bool {
-    if len(a) != len(b) {
-        return false
-    }
-    for i := range a {
-        if a[i] != b[i] {
-            return false
-        }
-    }
-    return true
-}
