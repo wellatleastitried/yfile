@@ -11,6 +11,7 @@ import (
     "os"
 
     "github.com/wellatleastitried/yfile/pkg/linuxfile"
+    "github.com/wellatleastitried/yfile/pkg/scanning"
 )
 
 // Args should pass through to the `file` command and just have a few addons for `yfile` specific stuff
@@ -34,7 +35,7 @@ func main() {
         cmd.Execute()
     }
 
-    // TODO: Replace this with actually kicking off detection and analysis
+    scanning.AnalyzeFile(filePath)
 }
 
 // TODO: Make this support multiple files
@@ -49,5 +50,32 @@ func verifyFilePath(filePath *string) {
         fmt.Fprintf(os.Stderr, "[Error] file '%s' does not exist\n", *filePath)
         os.Exit(1)
     }
+}
+
+func isFile(filePath *string) (bool, error) {
+    _, err := getFileInfo(filePath)
+    if err != nil {
+        return false, err
+    }
+    return true, nil
+}
+
+func isDirectory(filePath *string) (bool, error) {
+    fileInfo, err := getFileInfo(filePath)
+    if err != nil {
+        return false, err
+    }
+    return fileInfo.IsDir(), nil
+}
+
+func getFileInfo(filePath *string) (os.FileInfo, error) {
+    fileInfo, err := os.Stat(*filePath)
+    if err != nil {
+        if os.IsNotExist(err) {
+            return nil, fmt.Errorf("Path does not exist: %w", *filePath)
+        }
+        return nil, fmt.Errorf("Error retrieving file information for %w", *filePath)
+    }
+    return fileInfo, err
 }
 

@@ -1,7 +1,12 @@
 set shell := ["bash", "-cu"]
 
-build:
+build: compile-yara
     go build -o build/yfile ./cmd/yfile
+
+compile-yara:
+    cd ./rules
+    yarac ./index_all.yar ../pkg/scanning/ruleset.compiled
+    cd ..
 
 test: lint
     go test -v ./...
