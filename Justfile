@@ -19,7 +19,7 @@ compile-yara:
 clear-build-cache:
     @go clean -cache -modcache -r -i
 
-test: check-deps clear-build-cache lint
+test: check-deps clear-build-cache compile-yara lint
     @go test -v ./...
 
 lint:
