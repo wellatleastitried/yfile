@@ -10,6 +10,7 @@ Reimplementation of the "file" command with yara rules to scan for malware signa
 - `just`
 - `yara`
 - `libyara-dev`
+- `gcc` / `clang` (Any C compiler)
 
 #### Go Tools
 These can be installed by running `just dev-setup` once the project has been cloned.
