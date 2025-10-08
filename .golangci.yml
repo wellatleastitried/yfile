@@ -2,6 +2,9 @@ run:
   timeout: 2m
   tests: true
 
+  build-tags:
+    - embed
+
 linters:
   enable:
     - govet
@@ -14,6 +17,5 @@ linters:
     - gocyclo
 
 issues:
-  exclude-use-default: false
   max-issues-per-linter: 0
   max-same-issues: 0

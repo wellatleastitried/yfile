@@ -19,8 +19,8 @@ type CommandDataWithArgs struct {
     FilePath string
 }
 
-var NoArgumentsProvidedToFileArgsFlag = errors.New("The `file-args` flag was provided but no arguments were passed to it.")
-var FilePathProvidedInArguments = errors.New("In yfile, the file path can only be provided with the -f flag. It cannot reside within the -file-args.")
+var ErrNoArgumentsProvidedToFileArgsFlag = errors.New("the `file-args` flag was provided but no arguments were passed to it")
+var ErrFilePathProvidedInArguments = errors.New("in yfile the file path can only be provided with the -f flag it cannot reside within the -file-args")
 
 func NewCommand(filePath *string) CommandData {
     return CommandData {
@@ -30,15 +30,15 @@ func NewCommand(filePath *string) CommandData {
 }
 
 func NewCommandWithArgs(filePath *string, commandArgs *string) (CommandDataWithArgs, error) {
-    if commandArgsAreValid(commandArgs) {
-        return CommandDataWithArgs {
-            Name: "file",
-            Args: *commandArgs,
-            FilePath: *filePath,
-        }, nil
-    } else {
-        return CommandDataWithArgs{}, FilePathProvidedInArguments
+    if !commandArgsAreValid(commandArgs) {
+        return CommandDataWithArgs{}, ErrFilePathProvidedInArguments
     }
+
+    return CommandDataWithArgs {
+        Name: "file",
+        Args: *commandArgs,
+        FilePath: *filePath,
+    }, nil
 }
 
 func commandArgsAreValid(commandArgs *string) bool {
@@ -68,7 +68,7 @@ func (c CommandData) Execute() {
 
 func (c CommandDataWithArgs) Execute() {
     if c.Args == "" {
-        fmt.Fprintln(os.Stderr, NoArgumentsProvidedToFileArgsFlag)
+        fmt.Fprintln(os.Stderr, ErrNoArgumentsProvidedToFileArgsFlag)
         os.Exit(1)
     }
 

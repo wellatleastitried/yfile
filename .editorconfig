@@ -9,3 +9,6 @@ charset = utf-8
 indent_style = space
 indent_size = 4
 
+[*.compiled]
+end_of_line = unset
+insert_final_newline = unset
