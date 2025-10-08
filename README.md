@@ -26,11 +26,13 @@ go install github.com/wellatleastitried/yfile/cmd/yfile@latest
 
 ### Manual
 1. Clone the repository with submodules:
-`git clone --recurse-submodules https://github.com/wellatleastitried/yfile.git`
-
-2. Run `just`
 ```bash
-just build`
+git clone --recurse-submodules https://github.com/wellatleastitried/yfile.git
+```
+
+3. Run `just`
+```bash
+just build
 ```
 
 3. The binary can be ran from:
