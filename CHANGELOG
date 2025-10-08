@@ -1,0 +1,3 @@
+Implemented pass-through connection with UNIX 'file' command
+
+Implemented Yara rule matching on given file
