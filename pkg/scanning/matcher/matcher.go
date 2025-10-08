@@ -59,7 +59,7 @@ func ShowYaraMatches(filePath *string, rules *yara.Rules, verbose *bool) {
 
 func displayMatches(callback *Callback, verbose *bool) {
     if len(callback.matches) == 0 {
-        fmt.Println("No matches found.")
+        fmt.Println("File does not match common malware signatures.")
         return
     }
 

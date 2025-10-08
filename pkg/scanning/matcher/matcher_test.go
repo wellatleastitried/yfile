@@ -97,7 +97,7 @@ func TestShowYaraMatches(t *testing.T) {
 
         if output == "" {
             t.Fatalf("Iteration %d\nNo output captured from ShowYaraMatches()", i)
-        } else if strings.Contains(output, "No matches found") {
+        } else if strings.Contains(output, "File does not match common malware signatures.") {
             if bytes.Contains(content, []byte("safe")) {
                 // Expected no matches
                 continue
