@@ -76,7 +76,7 @@ func TestShowYaraMatches(t *testing.T) {
         os.Stdout = w
         os.Stderr = w
 
-        ShowYaraMatches(&filePath, rules, &verbose)
+        ShowYaraMatches(filePath, rules, &verbose)
 
         w.Close()
         os.Stdout = oldStdout

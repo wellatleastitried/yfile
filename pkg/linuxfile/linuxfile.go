@@ -22,14 +22,14 @@ type CommandDataWithArgs struct {
 var ErrNoArgumentsProvidedToFileArgsFlag = errors.New("the `file-args` flag was provided but no arguments were passed to it")
 var ErrFilePathProvidedInArguments = errors.New("in yfile the file path can only be provided with the -f flag it cannot reside within the -file-args")
 
-func NewCommand(filePath *string) CommandData {
+func NewCommand(filePath string) CommandData {
     return CommandData {
         Name: "file",
-        FilePath: *filePath,
+        FilePath: filePath,
     }
 }
 
-func NewCommandWithArgs(filePath *string, commandArgs *string) (CommandDataWithArgs, error) {
+func NewCommandWithArgs(filePath string, commandArgs *string) (CommandDataWithArgs, error) {
     if !commandArgsAreValid(commandArgs) {
         return CommandDataWithArgs{}, ErrFilePathProvidedInArguments
     }
@@ -37,7 +37,7 @@ func NewCommandWithArgs(filePath *string, commandArgs *string) (CommandDataWithA
     return CommandDataWithArgs {
         Name: "file",
         Args: *commandArgs,
-        FilePath: *filePath,
+        FilePath: filePath,
     }, nil
 }
 

@@ -17,7 +17,7 @@ func TestGetFileInfo(t *testing.T) {
     defer os.Remove(tmpFile.Name())
 
     filePath := tmpFile.Name()
-    info, err := getFileInfo(&filePath)
+    info, err := getFileInfo(filePath)
     if err != nil {
         t.Fatalf("getFileInfo() failed for valid path: %v", err)
     }
@@ -27,14 +27,14 @@ func TestGetFileInfo(t *testing.T) {
 
     // Test with a non-existent file path
     invalidPath := "/non/existent/file/path"
-    _, err = getFileInfo(&invalidPath)
+    _, err = getFileInfo(invalidPath)
     if err == nil {
         t.Fatal("Expected error for non-existent path, got nil")
     }
 
     // Test with an empty file path
     emptyPath := ""
-    _, err = getFileInfo(&emptyPath)
+    _, err = getFileInfo(emptyPath)
     if err == nil {
         t.Fatal("Expected error for empty path, got nil")
     }
@@ -49,17 +49,17 @@ func TestVerifyFilePath(t *testing.T) {
     defer os.Remove(tmpFile.Name())
 
     filePath := tmpFile.Name()
-    validResult := verifyFilePath(&filePath)
+    validResult := verifyFilePath(filePath)
     require.Equal(t, true, validResult)
 
     // Test with a non-existent file path
     invalidPath := "/non/existent/file/path"
-    invalidResult := verifyFilePath(&invalidPath)
+    invalidResult := verifyFilePath(invalidPath)
     require.Equal(t, false, invalidResult)
 
     // Test with an empty file path
     emptyPath := ""
-    emptyResult := verifyFilePath(&emptyPath)
+    emptyResult := verifyFilePath(emptyPath)
     require.Equal(t, false, emptyResult)
 }
 

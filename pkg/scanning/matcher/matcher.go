@@ -38,7 +38,7 @@ func LoadEmbeddedRules() (*yara.Rules, error) {
     return yara.ReadRules(bytes.NewReader(compiledRules))
 }
 
-func ShowYaraMatches(filePath *string, rules *yara.Rules, verbose *bool) {
+func ShowYaraMatches(filePath string, rules *yara.Rules, verbose *bool) {
     defer func() {
         if err := yara.Finalize(); err != nil {
             fmt.Fprintln(os.Stderr, "[Warning] An error occurred while finalizing go-yara: ", err)
@@ -49,7 +49,7 @@ func ShowYaraMatches(filePath *string, rules *yara.Rules, verbose *bool) {
         matches: make([]yara.MatchRule, 0),
     }
 
-    err := rules.ScanFile(*filePath, 0, 30*time.Second, callback)
+    err := rules.ScanFile(filePath, 0, 30*time.Second, callback)
     if err != nil {
         fmt.Fprintln(os.Stderr, ErrorScanningFile)
     }

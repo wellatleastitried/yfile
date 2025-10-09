@@ -1,7 +1,8 @@
 package argparse
 
 import (
-	"fmt"
+    "errors"
+    "fmt"
     "os"
 )
 
@@ -17,10 +18,10 @@ type Flags struct {
     stored map[string]Flag
 }
 
-var flags *Flags = &Flags{make(map[string]Flag)}
-var defaultValues map[string]string = make(map[string]string)
+var flags = &Flags{make(map[string]Flag)}
+var defaultValues = make(map[string]string)
 
-var files []string = make([]string, 0)
+var files = make([]string, 0)
 
 var ErrNoFileProvided = errors.New("no file paths were provided as arguments")
 
@@ -50,27 +51,27 @@ func SetString(name string, alternateName string, description string, required b
 }
 
 func contains(f *Flags, arg string) (Flag, bool) {
-	shortForm := "-" + arg
-	longForm := "--" + arg
+    shortForm := "-" + arg
+    longForm := "--" + arg
 
-	if flag, exists := f.stored[shortForm]; exists {
-		return flag, true
-	}
+    if flag, exists := f.stored[shortForm]; exists {
+        return flag, true
+    }
 
-	if flag, exists := f.stored[longForm]; exists {
-		return flag, true
-	}
+    if flag, exists := f.stored[longForm]; exists {
+        return flag, true
+    }
 
-	if flag, exists := f.stored[arg]; exists {
-		return flag, true
-	}
+    if flag, exists := f.stored[arg]; exists {
+        return flag, true
+    }
 
-	return Flag{}, false
+    return Flag{}, false
 }
 
 func RetrieveFiles() ([]string, error) {
     if len(files) < 1 {
-        return []string{}, NoFileProvided
+        return []string{}, ErrNoFileProvided
     }
 
     return files, nil
@@ -84,7 +85,7 @@ func (f *Flags) Parse() {
     args := os.Args[1:]
     for i := 0; i < len(args); i++ {
         arg := args[i]
-		if flag, exists := contains(f, arg); exists {
+        if flag, exists := contains(f, arg); exists {
             switch v := flag.reference.(type) {
             case *bool:
                 *v = true
@@ -95,27 +96,25 @@ func (f *Flags) Parse() {
                 }
             }
         } else {
-			if isFile(arg) {
-				files = append(files, arg)
-				continue
-			} else if isDir(arg) {
-				filesFromDir := extractFilesFromDir(arg)
-				for _, file := range filesFromDir {
-					files = append(files, file)
-				}
-				continue
-			}
-			fmt.Errorf("Unknown argument: %s", arg)
-			os.Exit(1)
+            if isFile(arg) {
+                files = append(files, arg)
+                continue
+            } else if isDir(arg) {
+                filesFromDir := extractFilesFromDir(arg)
+                files = append(files, filesFromDir...)
+                continue
+            }
+            fmt.Fprintf(os.Stderr, "[Error] Unknown argument: %s\n", arg)
+            os.Exit(1)
         }
     }
 }
 
-func PrintHelp() {
-    flags.printHelp()
+func PrintUsage() {
+    flags.PrintUsage()
 }
 
-func (f *Flags) PrintHelp() {
+func (f *Flags) PrintUsage() {
     // TODO: Poll flags and display in a beautiful way
 }
 
