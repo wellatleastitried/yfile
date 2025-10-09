@@ -6,7 +6,6 @@
 package main
 
 import (
-    "flag"
     "fmt"
     "os"
 
@@ -23,26 +22,29 @@ func main() {
 
     argparse.Parse()
 
-    //verbose := flag.Bool("v", false, "Enable verbose output")
-    //filePath := flag.String("f", "", "Path to the file to analyze (required)")
-    //fileCommandArgs := flag.String("file-args", "", "Arguments to pass through to the `file` command (e.g. '-b -i')")
-
-    //flag.Parse()
-
-    if !verifyFilePath(filePath) {
-        return
+    if fileCommandHelp {
+        displayHelp()
+        os.Exit(0)
     }
 
-    runFileCommand(filePath, fileCommandArgs)
+    files, err := argparse.RetrieveFiles()
+    if err != nil {
+        fmt.Errorf(err)
+        os.Exit(1)
+    }
 
-    scanning.AnalyzeFile(filePath, verbose)
+    processFiles(files, fileCommandArgs, verbose)
+}
+
+func displayHelp() {
+    argparse.printUsage()
 }
 
 func runFileCommand(filePath *string, fileCommandArgs *string) {
     if *fileCommandArgs != "" {
         cmd, err := linuxfile.NewCommandWithArgs(filePath, fileCommandArgs)
         if err != nil {
-            fmt.Fprintln(os.Stderr, "[Error] -file-args flag is invalid:", err)
+            fmt.Fprintln(os.Stderr, "[Error] (-f, --file-args) flag is invalid:", err)
             os.Exit(1)
         }
         cmd.Execute()
@@ -53,23 +55,16 @@ func runFileCommand(filePath *string, fileCommandArgs *string) {
     cmd.Execute()
 }
 
-func handleManyFiles(filePaths []*string, fileCommandArgs *string) {
+func processFiles(filePaths []*string, fileCommandArgs *string, verbose *bool) {
     for _, filePath := range filePaths {
-        if !verifyFilePath(filePath) {
-            continue
+        if verifyFilePath(filePath) {
+            runFileCommand(filePath, fileCommandArgs)
+            scanning.AnalyzeFile(filePath, verbose)
         }
-        runFileCommand(filePath, fileCommandArgs)
     }
 }
 
-// TODO: Make this support multiple files
 func verifyFilePath(filePath *string) bool {
-    if *filePath == "" {
-        fmt.Fprintln(os.Stderr, "[Error] -file flag is required")
-        flag.Usage()
-        return false
-    }
-
     if _, err := getFileInfo(filePath); err != nil {
         return false
     }
@@ -89,21 +84,4 @@ func getFileInfo(filePath *string) (os.FileInfo, error) {
     }
     return fileInfo, err
 }
-
-// TODO: These are for later implementation
-// func isFile(filePath *string) (bool, error) {
-//     _, err := getFileInfo(filePath)
-//     if err != nil {
-//         return false, err
-//     }
-//     return true, nil
-// }
-
-// func isDirectory(filePath *string) (bool, error) {
-//     fileInfo, err := getFileInfo(filePath)
-//     if err != nil {
-//         return false, err
-//     }
-//     return fileInfo.IsDir(), nil
-// }
 

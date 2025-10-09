@@ -22,6 +22,8 @@ var defaultValues map[string]string = make(map[string]string)
 
 var files []string = make([]string, 0)
 
+var ErrNoFileProvided = errors.New("no file paths were provided as arguments")
+
 func SetBool(name string, alternateName string, description string, required bool) *bool {
     flag := Flag{
         Name: name,
@@ -66,6 +68,14 @@ func contains(f *Flags, arg string) (Flag, bool) {
 	return Flag{}, false
 }
 
+func RetrieveFiles() ([]string, error) {
+    if len(files) < 1 {
+        return []string{}, NoFileProvided
+    }
+
+    return files, nil
+}
+
 func Parse() {
     flags.Parse()
 }
@@ -99,5 +109,13 @@ func (f *Flags) Parse() {
 			os.Exit(1)
         }
     }
+}
+
+func PrintHelp() {
+    flags.printHelp()
+}
+
+func (f *Flags) PrintHelp() {
+    // TODO: Poll flags and display in a beautiful way
 }
 
