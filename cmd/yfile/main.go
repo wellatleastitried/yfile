@@ -10,19 +10,28 @@ import (
     "fmt"
     "os"
 
+    "github.com/wellatleastitried/yfile/pkg/argparse"
     "github.com/wellatleastitried/yfile/pkg/linuxfile"
     "github.com/wellatleastitried/yfile/pkg/scanning"
 )
 
 // Args should pass through to the `file` command and just have a few addons for `yfile` specific stuff
 func main() {
-    verbose := flag.Bool("v", false, "Enable verbose output")
-    filePath := flag.String("f", "", "Path to the file to analyze (required)")
-    fileCommandArgs := flag.String("file-args", "", "Arguments to pass through to the `file` command (e.g. '-b -i')")
+    verbose := argparse.SetBool("v", "verbose", "Enable verbose output", false)
+    fileCommandArgs := argparse.SetString("f", "file-args", "Arguments to pass through to the `file` command (e.g. '-b -i')", false)
+    fileCommandHelp := argparse.SetBool("fh", "file-help", "Show help for the `file` command and exit", false)
 
-    flag.Parse()
+    argparse.Parse()
 
-    verifyFilePath(filePath)
+    //verbose := flag.Bool("v", false, "Enable verbose output")
+    //filePath := flag.String("f", "", "Path to the file to analyze (required)")
+    //fileCommandArgs := flag.String("file-args", "", "Arguments to pass through to the `file` command (e.g. '-b -i')")
+
+    //flag.Parse()
+
+    if !verifyFilePath(filePath) {
+        return
+    }
 
     runFileCommand(filePath, fileCommandArgs)
 
@@ -37,23 +46,35 @@ func runFileCommand(filePath *string, fileCommandArgs *string) {
             os.Exit(1)
         }
         cmd.Execute()
-    } else {
-        cmd := linuxfile.NewCommand(filePath)
-        cmd.Execute()
+        return
+    }
+
+    cmd := linuxfile.NewCommand(filePath)
+    cmd.Execute()
+}
+
+func handleManyFiles(filePaths []*string, fileCommandArgs *string) {
+    for _, filePath := range filePaths {
+        if !verifyFilePath(filePath) {
+            continue
+        }
+        runFileCommand(filePath, fileCommandArgs)
     }
 }
 
 // TODO: Make this support multiple files
-func verifyFilePath(filePath *string) {
+func verifyFilePath(filePath *string) bool {
     if *filePath == "" {
         fmt.Fprintln(os.Stderr, "[Error] -file flag is required")
         flag.Usage()
-        os.Exit(1)
+        return false
     }
 
     if _, err := getFileInfo(filePath); err != nil {
-        os.Exit(1)
+        return false
     }
+
+    return true
 }
 
 func getFileInfo(filePath *string) (os.FileInfo, error) {

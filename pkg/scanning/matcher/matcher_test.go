@@ -11,12 +11,6 @@ import (
     "github.com/stretchr/testify/require"
 )
 
-const ShouldPass = true
-const ShouldFail = false
-
-const WantErr = true
-const NoErr = false
-
 func TestLoadEmbeddedRules(t *testing.T) {
     rules, err := LoadEmbeddedRules()
     if err != nil {
@@ -32,7 +26,7 @@ func TestLoadEmbeddedRules(t *testing.T) {
 }
 
 func TestLoadEmbeddedRulesMultipleTimes(t *testing.T) {
-    for i := 0; i < 5; i++ {
+    for i := range 5 {
         rules, err := LoadEmbeddedRules()
         if err != nil {
             t.Fatalf("LoadEmbeddedRules() failed on iteration %d: %v", i, err)

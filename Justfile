@@ -40,5 +40,7 @@ get url:
     @go get "{{url}}"
     @go mod tidy
 
-release:
-    @tar -cvzf build/yfile-linux-amd64.tar.gz ./build/yfile
+release: build
+    @cp ./build/yfile ./yfile
+    @tar -cvzf build/yfile-linux-amd64.tar.gz ./yfile
+    @rm ./yfile
