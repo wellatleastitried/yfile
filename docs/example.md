@@ -43,3 +43,20 @@ test/testsignatures/lua_malware_sig.lua: ASCII text
     Tags: [MALW]
 ```
 
+### Verbose File Analysis (malicious file with multiple matches)
+```md
+\> yfile --verbose test/multiple.exe.txt
+test/testsignatures/multiple.exe.txt: ASCII text
+3 YARA matches:
+  - Rule: Contains_UserForm_Object (Namespace: default)
+  - Rule: LuaBot (Namespace: default)
+    Tags: [MALW]
+  - Rule: php_anuna (Namespace: default)
+```
+
+### File Analysis with custom `file` arguments
+```md
+\> yfile --file-args '-b -i' README.md
+TODO
+```
+
