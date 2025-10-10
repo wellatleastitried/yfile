@@ -27,6 +27,7 @@ var flags = &Flags{
 }
 var defaultValues = make(map[any]string)
 
+var filePathsToProcess = make([]string, 0)
 var files = make([]string, 0)
 
 var ErrNoFileProvided = errors.New("no file paths were provided as arguments")
@@ -36,6 +37,8 @@ var ErrDuplicateFlag = errors.New("a flag with the same short or long form name 
 // shortForm can be an empty string if no short form is desired
 // longForm can be an empty string if no long form is desired
 // HOWEVER, at least one of shortForm or longForm must be provided, otherwise an error is returned
+//
+// returns a pointer to the bool variable that will hold the flag's value after parsing
 func SetBool(shortForm string, longForm string, description string, required bool) (*bool, error) {
     if shortForm == "" && longForm == "" {
         return nil, ErrInvalidFlag
@@ -63,6 +66,8 @@ func SetBool(shortForm string, longForm string, description string, required boo
 // shortForm can be an empty string if no short form is desired
 // longForm can be an empty string if no long form is desired
 // HOWEVER, at least one of shortForm or longForm must be provided, otherwise an error is returned
+//
+// returns a pointer to the string variable that will hold the flag's value after parsing
 func SetString(shortForm string, longForm string, description string, required bool, defaultValue string) (*string, error) {
     if shortForm == "" && longForm == "" {
         return nil, ErrInvalidFlag
@@ -83,7 +88,7 @@ func SetString(shortForm string, longForm string, description string, required b
         reference: new(string),
     }
 
-    err := checkDuplicate(flags, flag)
+    err := flags.checkDuplicate(flag)
     if err != nil {
         return nil, err
     }
@@ -94,7 +99,7 @@ func SetString(shortForm string, longForm string, description string, required b
     return flag.reference.(*string), nil
 }
 
-func contains(f *Flags, arg string) (Flag, bool) {
+func (f *Flags) contains(arg string) (Flag, bool) {
     if flag, exists := f.getByShortName[arg]; exists {
         return flag, true
     }
@@ -105,17 +110,28 @@ func contains(f *Flags, arg string) (Flag, bool) {
     return Flag{}, false
 }
 
-func checkDuplicate(f *Flags, flag Flag) error {
-    if _, result := contains(f, flag.ShortFormName); result {
+func (f *Flags) checkDuplicate(flag Flag) error {
+    if _, result := f.contains(flag.ShortFormName); result {
         return ErrDuplicateFlag
     }
-    if _, result := contains(f, flag.LongFormName); result {
+    if _, result := f.contains(flag.LongFormName); result {
         return ErrDuplicateFlag
     }
     return nil
 }
 
-func RetrieveFiles() ([]string, error) {
+func RetrieveFiles(recurse *bool) ([]string, error) {
+    for _, file := range filePathsToProcess {
+        if utils.IsFile(file) {
+            files = append(files, file)
+            continue
+        } else if utils.IsDir(file) {
+            filesFromDir, err := utils.ExtractFilesFromDir(file, recurse)
+            if err == nil {
+                files = append(files, filesFromDir...)
+            }
+        }
+    }
     if len(files) < 1 {
         return []string{}, ErrNoFileProvided
     }
@@ -124,14 +140,10 @@ func RetrieveFiles() ([]string, error) {
 }
 
 func Parse() {
-    flags.Parse()
-}
-
-func (f *Flags) Parse() {
     args := os.Args[1:]
     for i := 0; i < len(args); i++ {
         arg := args[i]
-        if flag, exists := contains(f, arg); exists {
+        if flag, exists := flags.contains(arg); exists {
             switch v := flag.reference.(type) {
             case *bool:
                 *v = true
@@ -145,16 +157,11 @@ func (f *Flags) Parse() {
                 }
             }
         } else {
-            if utils.IsFile(arg) {
-                files = append(files, arg)
-                continue
-            } else if utils.IsDir(arg) {
-                filesFromDir, err := utils.ExtractFilesFromDir(arg)
-                if err == nil {
-                    files = append(files, filesFromDir...)
-                }
+            if utils.IsFile(arg) || utils.IsDir(arg) {
+                filePathsToProcess = append(filePathsToProcess, arg)
                 continue
             }
+
             fmt.Fprintf(os.Stderr, "[Error] Unknown argument: %s\n", arg)
             os.Exit(utils.ExitError)
         }
@@ -162,12 +169,8 @@ func (f *Flags) Parse() {
 }
 
 func PrintUsage() {
-    flags.PrintUsage()
-}
-
-func (f *Flags) PrintUsage() {
     fmt.Fprintf(os.Stdout, "Usage: %s [options] <file1> <file2> ...\n\nOptions:\n", os.Args[0])
-    for _, flag := range f.getByShortName {
+    for _, flag := range flags.getByShortName {
         req := ""
         def := ""
         if flag.Required {

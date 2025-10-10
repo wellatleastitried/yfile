@@ -69,3 +69,4 @@ func TestSetString(t *testing.T) {
 func setMyOwnArgs(args ...string) {
     os.Args = append([]string{os.Args[0]}, args...)
 }
+

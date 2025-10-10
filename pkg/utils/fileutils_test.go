@@ -72,7 +72,8 @@ func TestExtractFilesFromDir(t *testing.T) {
     }
     defer os.RemoveAll(dirPath)
 
-    files, err := ExtractFilesFromDir(dirPath)
+    recurse := false
+    files, err := ExtractFilesFromDir(dirPath, &recurse)
     if err != nil {
         t.Fatalf("ExtractFilesFromDir() failed for valid directory: %v", err)
     }
@@ -95,7 +96,8 @@ func TestExtractFilesFromDir(t *testing.T) {
         t.Fatalf("Failed to create temp file in sub-directory: %v", err)
     }
 
-    files, err = ExtractFilesFromDir(dirPath)
+    recurse = true
+    files, err = ExtractFilesFromDir(dirPath, &recurse)
     if err != nil {
         t.Fatalf("ExtractFilesFromDir() failed for directory with files and sub-directories: %v", err)
     }
@@ -112,21 +114,21 @@ func TestExtractFilesFromDir(t *testing.T) {
     defer os.Remove(tmpFile.Name())
 
     filePath := tmpFile.Name()
-    _, err = ExtractFilesFromDir(filePath)
+    _, err = ExtractFilesFromDir(filePath, &recurse)
     if err == nil {
         t.Fatal("Expected error for file path, got nil")
     }
 
     // Test with a non-existent directory path
     invalidPath := "/non/existent/directory/path"
-    _, err = ExtractFilesFromDir(invalidPath)
+    _, err = ExtractFilesFromDir(invalidPath, &recurse)
     if err == nil {
         t.Fatal("Expected error for non-existent directory, got nil")
     }
 
     // Test with an empty directory path
     emptyPath := ""
-    _, err = ExtractFilesFromDir(emptyPath)
+    _, err = ExtractFilesFromDir(emptyPath, &recurse)
     if err == nil {
         t.Fatal("Expected error for empty directory path, got nil")
     }

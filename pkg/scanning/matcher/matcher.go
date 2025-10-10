@@ -39,13 +39,7 @@ func LoadEmbeddedRules() (*yara.Rules, error) {
     return yara.ReadRules(bytes.NewReader(compiledRules))
 }
 
-func ShowYaraMatches(filePath string, rules *yara.Rules, verbose *bool) int {
-    defer func() {
-        if err := yara.Finalize(); err != nil {
-            fmt.Fprintln(os.Stderr, "[Warning] An error occurred while finalizing go-yara: ", err)
-        }
-    }()
-
+func ShowYaraMatches(filePath string, rules *yara.Rules, verbose *bool) (string, int) {
     callback := &Callback{
         matches: make([]yara.MatchRule, 0),
     }
@@ -55,30 +49,34 @@ func ShowYaraMatches(filePath string, rules *yara.Rules, verbose *bool) int {
         fmt.Fprintln(os.Stderr, ErrorScanningFile)
     }
 
-    displayMatches(callback, verbose)
+    output := getMatches(callback, verbose)
 
-    return len(callback.matches)
+    return output, len(callback.matches)
 }
 
-// TODO: This is stuck on only showing one rule match. Fix it
-func displayMatches(callback *Callback, verbose *bool) {
+func getMatches(callback *Callback, verbose *bool) string {
     if len(callback.matches) == 0 {
-        fmt.Println("File does not match common malware signatures.")
-        return
+        return "File does not match common malware signatures."
     }
 
-    fmt.Printf("%d YARA matches:\n", len(callback.matches))
+    output := fmt.Sprintf("%d YARA matches:\n", len(callback.matches))
     for _, match := range callback.matches {
-        fmt.Printf("  - Rule: %s (Namespace: %s)\n", match.Rule, match.Namespace)
+        output += fmt.Sprintf("  - Rule: %s (Namespace: %s)\n", match.Rule, match.Namespace)
         if *verbose {
+            if len(match.Metas) > 0 {
+                output += fmt.Sprintf("    Metas: %v\n", match.Metas)
+            }
             if len(match.Tags) > 0 {
-                fmt.Printf("    Tags: %v\n", match.Tags)
+                output += fmt.Sprintf("    Tags: %v\n", match.Tags)
             }
 
             for _, str := range match.Strings {
                 fmt.Printf("    Matched string '%s' at offset %d\n", str.Name, str.Offset)
+                output += fmt.Sprintf("    Matched string '%s' at offset %d\n", str.Name, str.Offset)
             }
         }
     }
+
+    return output
 }
 

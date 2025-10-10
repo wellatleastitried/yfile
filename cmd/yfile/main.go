@@ -8,9 +8,10 @@ package main
 import (
     "fmt"
     "os"
+    "strings"
 
     "github.com/wellatleastitried/yfile/pkg/argparse"
-    "github.com/wellatleastitried/yfile/pkg/linuxfile"
+    "github.com/wellatleastitried/yfile/pkg/unixfile"
     "github.com/wellatleastitried/yfile/pkg/scanning"
     "github.com/wellatleastitried/yfile/pkg/utils"
 )
@@ -18,32 +19,13 @@ import (
 const argParseErrorString = "Error setting up argument parser:"
 
 func main() {
-    help, err := argparse.SetBool("h", "help", "Show this help message and exit", false)
-    if err != nil {
-        fmt.Fprintln(os.Stderr, argParseErrorString, err)
-        os.Exit(utils.ExitError)
-    }
-    verbose, err := argparse.SetBool("v", "verbose", "Enable verbose output", false)
-    if err != nil {
-        fmt.Fprintln(os.Stderr, argParseErrorString, err)
-        os.Exit(utils.ExitError)
-    }
-    version, err := argparse.SetBool("", "version", "Show version information and exit", false)
-    if err != nil {
-        fmt.Fprintln(os.Stderr, argParseErrorString, err)
-        os.Exit(utils.ExitError)
-    }
-    //json := argparse.SetBool("j", "json", "Output results in JSON format", false)
-    fileCommandArgs, err := argparse.SetString("f", "file-args", "Arguments to pass through to the `file` command (e.g. '-b -i')", false, "")
-    if err != nil {
-        fmt.Fprintln(os.Stderr, argParseErrorString, err)
-        os.Exit(utils.ExitError)
-    }
-    fileCommandHelp, err := argparse.SetBool("fh", "file-help", "Show help for the `file` command and exit", false)
-    if err != nil {
-        fmt.Fprintln(os.Stderr, argParseErrorString, err)
-        os.Exit(utils.ExitError)
-    }
+    help := setBoolFlag("h", "help", "Show this help message and exit", false)
+    verbose := setBoolFlag("v", "verbose", "Enable verbose output", false)
+    version := setBoolFlag("", "version", "Show version information and exit", false)
+    json := setBoolFlag("j", "json", "Output results in JSON format", false)
+    recurse := setBoolFlag("r", "recurse", "Recurse into directories when provided as input", false)
+    fileCommandArgs := setStringFlag("f", "file-args", "Arguments to pass through to the `file` command (e.g. '-b -i')", false, "")
+    fileCommandHelp := setBoolFlag("fh", "file-help", "Show help for the `file` command and exit", false)
 
     argparse.Parse()
 
@@ -51,21 +33,40 @@ func main() {
         displayHelp()
         os.Exit(utils.ExitOk)
     } else if *fileCommandHelp {
-        linuxfile.DisplayFileHelp()
+        unixfile.DisplayFileHelp()
         os.Exit(utils.ExitOk)
     } else if *version {
         displayVersion()
         os.Exit(utils.ExitOk)
     }
 
-    files, err := argparse.RetrieveFiles()
+    files, err := argparse.RetrieveFiles(recurse)
     if err != nil {
         fmt.Fprintln(os.Stderr, "No files provided:", err)
         os.Exit(utils.ExitError)
     }
 
-    exitcode := processFiles(files, fileCommandArgs, verbose)
+    exitcode := processFiles(files, fileCommandArgs, verbose, json)
     os.Exit(exitcode)
+}
+
+// I am handling errors the same way for every flag so I wrapped argparse calls
+func setStringFlag(shortForm, longForm, description string, required bool, defaultValue string) *string {
+    flag, err := argparse.SetString(shortForm, longForm, description, required, defaultValue)
+    if err != nil {
+        fmt.Fprintln(os.Stderr, argParseErrorString, err)
+        os.Exit(utils.ExitError)
+    }
+    return flag
+}
+
+func setBoolFlag(shortForm, longForm, description string, required bool) *bool {
+    flag, err := argparse.SetBool(shortForm, longForm, description, required)
+    if err != nil {
+        fmt.Fprintln(os.Stderr, argParseErrorString, err)
+        os.Exit(utils.ExitError)
+    }
+    return flag
 }
 
 func displayHelp() {
@@ -76,16 +77,40 @@ func displayVersion() {
     fmt.Printf("yfile version %s\n", utils.Version)
 }
 
-func processFiles(filePaths []string, fileCommandArgs *string, verbose *bool) int {
+func processFiles(filePaths []string, fileCommandArgs *string, verbose , outputFormat *bool) int {
+    exitcode := utils.ExitOk
     for _, filePath := range filePaths {
-        linuxfile.RunFileCommand(filePath, fileCommandArgs)
+        fileOutput := unixfile.RunFileCommand(filePath, fileCommandArgs)
 
-        exitcode := scanning.AnalyzeFile(filePath, verbose)
-        if exitcode != utils.ExitOk {
+        scanOutput, exitcode := scanning.AnalyzeFile(filePath, verbose)
+        if exitcode == utils.ExitInfected {
+            // Set exit code to infected if ANY single file is infected
+            exitcode = utils.ExitInfected
+        }
+        if exitcode == utils.ExitError {
             return exitcode
         }
+
+        displayOutput(outputFormat, fileOutput, scanOutput)
+        displayDivider(fileOutput, scanOutput)
     }
 
-    return utils.ExitOk
+    return exitcode
+}
+
+func displayOutput(outputFormat *bool, fileOutput, scanOutput string) {
+    if *outputFormat == utils.FormatJSON {
+        // json output not yet implemented
+        fmt.Println(utils.ToJSON(fileOutput, scanOutput))
+    } else {
+            fmt.Printf("%s%s\n", fileOutput, scanOutput)
+    }
+}
+
+func displayDivider(fileOutput, scanOutput string) {
+    maxLen := utils.MaxLineLength(fileOutput, scanOutput)
+    if maxLen > 0 {
+        fmt.Println(strings.Repeat("-", maxLen))
+    }
 }
 

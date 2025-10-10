@@ -1,6 +1,7 @@
 package utils
 
 import (
+    "path/filepath"
     "fmt"
     "os"
 )
@@ -23,7 +24,7 @@ func IsFile(filePath string) bool {
     return fileInfo.Mode().IsRegular()
 }
 
-func ExtractFilesFromDir(dirPath string) ([]string, error) {
+func ExtractFilesFromDir(dirPath string, recurse *bool) ([]string, error) {
     fileInfo, err := getFileInfo(dirPath)
     if err != nil {
         return []string{}, err
@@ -38,10 +39,15 @@ func ExtractFilesFromDir(dirPath string) ([]string, error) {
     }
     files := make([]string, 0)
     for _, entry := range dirEntries {
+        fullPath := filepath.Join(dirPath, entry.Name())
         if !entry.IsDir() {
-            files = append(files, fmt.Sprintf("%s/%s", dirPath, entry.Name()))
+            files = append(files, fullPath)
         } else {
-            subDirFiles, err := ExtractFilesFromDir(fmt.Sprintf("%s/%s", dirPath, entry.Name()))
+            if !*recurse {
+                continue
+            }
+
+            subDirFiles, err := ExtractFilesFromDir(fullPath, recurse)
             if err != nil {
                 fmt.Fprintf(os.Stderr, "[Warning] Could not read sub-directory %s: %v\n", entry.Name(), err)
                 continue
