@@ -14,7 +14,7 @@ build: check-deps clear-build-cache compile-yara
     @go build -o build/yfile ./cmd/yfile
 
 compile-yara:
-    @yarac ./rules/index.yar ./pkg/scanning/matcher/ruleset.compiled 2> /dev/null || (echo "Failed to compile YARA rules!" && exit 1)
+    @yarac --no-warnings ./rules/index.yar ./pkg/scanning/matcher/ruleset.compiled || (echo "Failed to compile YARA rules!" && exit 1)
 
 clear-build-cache:
     @go clean -cache -modcache -r -i

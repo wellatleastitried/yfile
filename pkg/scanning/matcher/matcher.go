@@ -28,11 +28,11 @@ func (c *Callback) RuleMatching(_ *yara.ScanContext, rule *yara.Rule) (bool, err
     }
     c.matches = append(c.matches, match)
 
-    return true, nil
+    return false, nil
 }
 
 func (c *Callback) RuleNotMatching(_ *yara.Rule) (bool, error) {
-    return true, nil
+    return false, nil
 }
 
 func LoadEmbeddedRules() (*yara.Rules, error) {
