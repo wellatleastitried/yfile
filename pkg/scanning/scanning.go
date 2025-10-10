@@ -1,22 +1,25 @@
 package scanning
 
 import (
+    "errors"
     "fmt"
     "os"
 
     "github.com/wellatleastitried/yfile/pkg/scanning/matcher"
+    "github.com/wellatleastitried/yfile/pkg/utils"
 )
 
-var YaraRulesLoadError = "An unknown error occurred while loading the pre-compiled YARA rules."
+var ErrYaraRulesLoad = errors.New("unknown error occurred while loading the pre-compiled YARA rules")
 
 // Layer of abstraction for alternate analysis methods to be added in the future
-func AnalyzeFile(filePath string, verbose *bool) {
+func AnalyzeFile(filePath string, verbose *bool) int {
     rules, err := matcher.LoadEmbeddedRules()
     if err != nil {
-        fmt.Fprintln(os.Stderr, YaraRulesLoadError)
+        fmt.Fprintln(os.Stderr, "[Error] ", ErrYaraRulesLoad, ":", err)
     }
     defer rules.Destroy()
 
-    matcher.ShowYaraMatches(filePath, rules, verbose)
+    count := matcher.ShowYaraMatches(filePath, rules, verbose)
+    return utils.GetExitcodeFromMatches(count)
 }
 

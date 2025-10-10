@@ -41,6 +41,7 @@ get url:
     @go mod tidy
 
 release: build
+    @mkdir -p ./build/release
     @cp ./build/yfile ./yfile
-    @tar -cvzf build/yfile-linux-amd64.tar.gz ./yfile
+    @tar -cvzf build/release/yfile-linux-amd64.tar.gz ./yfile
     @rm ./yfile

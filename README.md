@@ -1,6 +1,6 @@
 # yfile
 
-Reimplementation of the "file" command with yara rules to scan for malware signatures and other patterns.
+Reimplementation of the "file" command with yara rules to scan for common malware signatures and other patterns.
 
 ## Requirements
 
@@ -31,7 +31,7 @@ go install github.com/wellatleastitried/yfile/cmd/yfile@latest
 git clone --recurse-submodules https://github.com/wellatleastitried/yfile.git
 ```
 
-3. Run `just`
+2. Run `just`
 ```bash
 just build
 ```
@@ -44,3 +44,13 @@ or installed to `/usr/local/bin` with:
 ```bash
 sudo just install
 ```
+
+## Usage
+User guide can be found [here](./docs/user_guide.md).
+
+## Contributing
+Contributions are welcome! Please see the [contributing guide](./CONTRIBUTING.md) for more information.
+
+## License
+This project is licensed under the Apache License. See the [LICENSE](./LICENSE) file for details.
+

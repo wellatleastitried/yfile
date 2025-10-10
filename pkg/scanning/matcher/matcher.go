@@ -3,6 +3,7 @@ package matcher
 import (
     "bytes"
     _ "embed"
+    "errors"
     "fmt"
     "os"
     "time"
@@ -10,7 +11,7 @@ import (
     "github.com/hillu/go-yara/v4"
 )
 
-var ErrorScanningFile = "An error occurred while scanning the provided file."
+var ErrorScanningFile = errors.New("error occurred while scanning the provided file")
 
 //go:embed ruleset.compiled
 var compiledRules []byte
@@ -38,7 +39,7 @@ func LoadEmbeddedRules() (*yara.Rules, error) {
     return yara.ReadRules(bytes.NewReader(compiledRules))
 }
 
-func ShowYaraMatches(filePath string, rules *yara.Rules, verbose *bool) {
+func ShowYaraMatches(filePath string, rules *yara.Rules, verbose *bool) int {
     defer func() {
         if err := yara.Finalize(); err != nil {
             fmt.Fprintln(os.Stderr, "[Warning] An error occurred while finalizing go-yara: ", err)
@@ -55,8 +56,11 @@ func ShowYaraMatches(filePath string, rules *yara.Rules, verbose *bool) {
     }
 
     displayMatches(callback, verbose)
+
+    return len(callback.matches)
 }
 
+// TODO: This is stuck on only showing one rule match. Fix it
 func displayMatches(callback *Callback, verbose *bool) {
     if len(callback.matches) == 0 {
         fmt.Println("File does not match common malware signatures.")

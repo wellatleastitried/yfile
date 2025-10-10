@@ -3,7 +3,9 @@ Improved argument parsing for a more normal syntax and multi-file support
 
 Added more extensive testing
 
-#### 10-8-25
+Updated documentation and added versioning
+
+#### 10-8-25 v0.1.0
 Implemented pass-through connection with UNIX 'file' command
 
 Implemented Yara rule matching on given file

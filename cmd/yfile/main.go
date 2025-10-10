@@ -12,76 +12,80 @@ import (
     "github.com/wellatleastitried/yfile/pkg/argparse"
     "github.com/wellatleastitried/yfile/pkg/linuxfile"
     "github.com/wellatleastitried/yfile/pkg/scanning"
+    "github.com/wellatleastitried/yfile/pkg/utils"
 )
 
-// Args should pass through to the `file` command and just have a few addons for `yfile` specific stuff
+const argParseErrorString = "Error setting up argument parser:"
+
 func main() {
-    verbose := argparse.SetBool("v", "verbose", "Enable verbose output", false)
-    fileCommandArgs := argparse.SetString("f", "file-args", "Arguments to pass through to the `file` command (e.g. '-b -i')", false, "")
-    fileCommandHelp := argparse.SetBool("fh", "file-help", "Show help for the `file` command and exit", false)
+    help, err := argparse.SetBool("h", "help", "Show this help message and exit", false)
+    if err != nil {
+        fmt.Fprintln(os.Stderr, argParseErrorString, err)
+        os.Exit(utils.ExitError)
+    }
+    verbose, err := argparse.SetBool("v", "verbose", "Enable verbose output", false)
+    if err != nil {
+        fmt.Fprintln(os.Stderr, argParseErrorString, err)
+        os.Exit(utils.ExitError)
+    }
+    version, err := argparse.SetBool("", "version", "Show version information and exit", false)
+    if err != nil {
+        fmt.Fprintln(os.Stderr, argParseErrorString, err)
+        os.Exit(utils.ExitError)
+    }
+    //json := argparse.SetBool("j", "json", "Output results in JSON format", false)
+    fileCommandArgs, err := argparse.SetString("f", "file-args", "Arguments to pass through to the `file` command (e.g. '-b -i')", false, "")
+    if err != nil {
+        fmt.Fprintln(os.Stderr, argParseErrorString, err)
+        os.Exit(utils.ExitError)
+    }
+    fileCommandHelp, err := argparse.SetBool("fh", "file-help", "Show help for the `file` command and exit", false)
+    if err != nil {
+        fmt.Fprintln(os.Stderr, argParseErrorString, err)
+        os.Exit(utils.ExitError)
+    }
 
     argparse.Parse()
 
-    if *fileCommandHelp {
+    if len(os.Args) < 2 || *help {
         displayHelp()
-        os.Exit(0)
+        os.Exit(utils.ExitOk)
+    } else if *fileCommandHelp {
+        linuxfile.DisplayFileHelp()
+        os.Exit(utils.ExitOk)
+    } else if *version {
+        displayVersion()
+        os.Exit(utils.ExitOk)
     }
 
     files, err := argparse.RetrieveFiles()
     if err != nil {
-        fmt.Fprintln(os.Stderr, "[Error] No files provided:", err)
-        os.Exit(1)
+        fmt.Fprintln(os.Stderr, "No files provided:", err)
+        os.Exit(utils.ExitError)
     }
 
-    processFiles(files, fileCommandArgs, verbose)
+    exitcode := processFiles(files, fileCommandArgs, verbose)
+    os.Exit(exitcode)
 }
 
 func displayHelp() {
     argparse.PrintUsage()
 }
 
-func runFileCommand(filePath string, fileCommandArgs *string) {
-    if *fileCommandArgs != "" {
-        cmd, err := linuxfile.NewCommandWithArgs(filePath, fileCommandArgs)
-        if err != nil {
-            fmt.Fprintln(os.Stderr, "[Error] (-f, --file-args) flag is invalid:", err)
-            os.Exit(1)
-        }
-        cmd.Execute()
-        return
-    }
-
-    cmd := linuxfile.NewCommand(filePath)
-    cmd.Execute()
+func displayVersion() {
+    fmt.Printf("yfile version %s\n", utils.Version)
 }
 
-func processFiles(filePaths []string, fileCommandArgs *string, verbose *bool) {
+func processFiles(filePaths []string, fileCommandArgs *string, verbose *bool) int {
     for _, filePath := range filePaths {
-        if verifyFilePath(filePath) {
-            runFileCommand(filePath, fileCommandArgs)
-            scanning.AnalyzeFile(filePath, verbose)
+        linuxfile.RunFileCommand(filePath, fileCommandArgs)
+
+        exitcode := scanning.AnalyzeFile(filePath, verbose)
+        if exitcode != utils.ExitOk {
+            return exitcode
         }
     }
-}
 
-func verifyFilePath(filePath string) bool {
-    if _, err := getFileInfo(filePath); err != nil {
-        return false
-    }
-
-    return true
-}
-
-func getFileInfo(filePath string) (os.FileInfo, error) {
-    fileInfo, err := os.Stat(filePath)
-    if err != nil {
-        if os.IsNotExist(err) {
-            fmt.Fprintf(os.Stderr, "[Error] Path does not exist: %s\n", filePath)
-            return nil, err
-        }
-        fmt.Fprintf(os.Stderr, "[Error] Could not retrieve file information for %s: %v\n", filePath, err)
-        return nil, err
-    }
-    return fileInfo, err
+    return utils.ExitOk
 }
 
