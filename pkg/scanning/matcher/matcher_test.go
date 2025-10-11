@@ -3,19 +3,12 @@ package matcher
 import (
     "bytes"
     "fmt"
-    "io"
     "os"
     "strings"
     "testing"
 
     "github.com/stretchr/testify/require"
 )
-
-const ShouldPass = true
-const ShouldFail = false
-
-const WantErr = true
-const NoErr = false
 
 func TestLoadEmbeddedRules(t *testing.T) {
     rules, err := LoadEmbeddedRules()
@@ -32,7 +25,7 @@ func TestLoadEmbeddedRules(t *testing.T) {
 }
 
 func TestLoadEmbeddedRulesMultipleTimes(t *testing.T) {
-    for i := 0; i < 5; i++ {
+    for i := range 5 {
         rules, err := LoadEmbeddedRules()
         if err != nil {
             t.Fatalf("LoadEmbeddedRules() failed on iteration %d: %v", i, err)
@@ -76,24 +69,7 @@ func TestShowYaraMatches(t *testing.T) {
         filePath := tmpFile.Name()
         verbose := false
 
-        oldStdout := os.Stdout
-        oldStderr := os.Stderr
-        r, w, _ := os.Pipe()
-        os.Stdout = w
-        os.Stderr = w
-
-        ShowYaraMatches(&filePath, rules, &verbose)
-
-        w.Close()
-        os.Stdout = oldStdout
-        os.Stderr = oldStderr
-
-        var buf bytes.Buffer
-        if _, err := io.Copy(&buf, r); err != nil {
-            t.Fatalf("Iteration %d:\nFailed to read captured output: %v", i, err)
-        }
-
-        output := buf.String()
+        output, count := ShowYaraMatches(filePath, rules, &verbose)
 
         if output == "" {
             t.Fatalf("Iteration %d\nNo output captured from ShowYaraMatches()", i)
@@ -107,6 +83,7 @@ func TestShowYaraMatches(t *testing.T) {
 
         if bytes.Contains(content, []byte("?php")) || bytes.Contains(content, []byte("LUA_PATH")) {
             require.Contains(t, output, "Rule:")
+            require.Equal(t, count > 0, true)
         }
     }
 }

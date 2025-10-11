@@ -1,4 +1,4 @@
-package linuxfile
+package unixfile
 
 import (
     "fmt"
@@ -6,6 +6,8 @@ import (
     "strings"
     "os"
     "os/exec"
+
+    "github.com/wellatleastitried/yfile/pkg/utils"
 )
 
 type CommandData struct {
@@ -22,14 +24,25 @@ type CommandDataWithArgs struct {
 var ErrNoArgumentsProvidedToFileArgsFlag = errors.New("the `file-args` flag was provided but no arguments were passed to it")
 var ErrFilePathProvidedInArguments = errors.New("in yfile the file path can only be provided with the -f flag it cannot reside within the -file-args")
 
-func NewCommand(filePath *string) CommandData {
+func DisplayFileHelp() {
+    cmd := exec.Command("file", "--help")
+    stdout, err := cmd.Output()
+    if err != nil {
+        fmt.Fprintf(os.Stderr, "%v", err)
+        os.Exit(utils.ExitError)
+    }
+
+    fmt.Fprintf(os.Stdout, "%s", string(stdout))
+}
+
+func newCommand(filePath string) CommandData {
     return CommandData {
         Name: "file",
-        FilePath: *filePath,
+        FilePath: filePath,
     }
 }
 
-func NewCommandWithArgs(filePath *string, commandArgs *string) (CommandDataWithArgs, error) {
+func newCommandWithArgs(filePath string, commandArgs *string) (CommandDataWithArgs, error) {
     if !commandArgsAreValid(commandArgs) {
         return CommandDataWithArgs{}, ErrFilePathProvidedInArguments
     }
@@ -37,7 +50,7 @@ func NewCommandWithArgs(filePath *string, commandArgs *string) (CommandDataWithA
     return CommandDataWithArgs {
         Name: "file",
         Args: *commandArgs,
-        FilePath: *filePath,
+        FilePath: filePath,
     }, nil
 }
 
@@ -59,30 +72,45 @@ func commandArgsAreValid(commandArgs *string) bool {
     }
     return true
 }
-    
 
-func (c CommandData) Execute() {
+func (c *CommandData) Execute() string {
     cmd := exec.Command(c.Name, c.FilePath)
-    execute(cmd)
+    return execute(cmd)
 }
 
-func (c CommandDataWithArgs) Execute() {
+func (c *CommandDataWithArgs) Execute() string {
     if c.Args == "" {
         fmt.Fprintln(os.Stderr, ErrNoArgumentsProvidedToFileArgsFlag)
-        os.Exit(1)
+        os.Exit(utils.ExitError)
     }
 
-    cmd := exec.Command(c.Name, c.Args, c.FilePath)
-    execute(cmd)
+    args := strings.Fields(c.Args)
+    args = append(args, c.FilePath)
+    cmd := exec.Command(c.Name, args...)
+    return execute(cmd)
 }
 
-func execute(cmd *exec.Cmd) {
+func execute(cmd *exec.Cmd) string {
     stdout, err := cmd.Output()
     if err != nil {
         fmt.Fprintf(os.Stderr, "%v", err)
-        os.Exit(1)
+        os.Exit(utils.ExitError)
     }
 
-    fmt.Fprintf(os.Stdout, "%s", string(stdout))
+    return string(stdout)
+}
+
+func RunFileCommand(filePath string, fileCommandArgs *string) string {
+    if *fileCommandArgs != "" {
+        cmd, err := newCommandWithArgs(filePath, fileCommandArgs)
+        if err != nil {
+            fmt.Fprintln(os.Stderr, "[Error] (-f, --file-args) flag is invalid:", err)
+            os.Exit(utils.ExitError)
+        }
+        return cmd.Execute()
+    }
+
+    cmd := newCommand(filePath)
+    return cmd.Execute()
 }
 
