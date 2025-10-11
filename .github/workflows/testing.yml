@@ -28,5 +28,5 @@ jobs:
         run: just dev-setup
 
       - name: Run tests
-        run: just test
+        run: just test-all
 
