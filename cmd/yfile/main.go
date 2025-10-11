@@ -82,13 +82,17 @@ func processFiles(filePaths []string, fileCommandArgs *string, verbose , outputF
     for _, filePath := range filePaths {
         fileOutput := unixfile.RunFileCommand(filePath, fileCommandArgs)
 
-        scanOutput, exitcode := scanning.AnalyzeFile(filePath, verbose)
-        if exitcode == utils.ExitInfected {
+        var scanOutput string
+        var currentExitcode int
+        scanOutput, currentExitcode = scanning.AnalyzeFile(filePath, verbose)
+
+        if currentExitcode == utils.ExitError {
+            return currentExitcode
+        }
+
+        if currentExitcode == utils.ExitInfected {
             // Set exit code to infected if ANY single file is infected
             exitcode = utils.ExitInfected
-        }
-        if exitcode == utils.ExitError {
-            return exitcode
         }
 
         displayOutput(outputFormat, fileOutput, scanOutput)

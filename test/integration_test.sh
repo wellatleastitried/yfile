@@ -16,7 +16,7 @@ test_exit_code() {
     shift 2
     local cmd=("$@")
 
-    echo -n "Testing: $test_name"
+    echo -n "Testing: $test_name - "
 
     set +e
     "${cmd[@]}" > /dev/null 2>&1
@@ -25,10 +25,10 @@ test_exit_code() {
 
     if [ "$actual_exit" -eq "$expected_exit" ]; then
         echo -e "${GREEN}PASS${NC}"
-        ((PASSED++))
+        PASSED=$((PASSED + 1))
     else
         echo -e "${RED}FAILED${NC}"
-        ((FAILED++))
+        FAILED=$((FAILED + 1))
     fi
 }
 
@@ -38,16 +38,16 @@ test_output() {
     shift 2
     local cmd=("$@")
 
-    echo -n "Testing: $test_name"
+    echo -n "Testing: $test_name - "
 
     output=$("${cmd[@]}" 2>&1 || true)
 
     if echo "$output" | grep -qi "$expected_pattern"; then
         echo -e "${GREEN}PASS${NC}"
-        ((PASSED++))
+        PASSED=$((PASSED + 1))
     else
         echo -e "${RED}FAILED${NC}"
-        ((FAILED++))
+        FAILED=$((FAILED + 1))
     fi
 }
 
@@ -61,17 +61,16 @@ chmod +x "$TEST_DIR/test.sh"
 echo "Running integration tests..."
 echo
 
-# TODO
-test_exit_code
-test_exit_code
-test_exit_code
-test_exit_code
-test_exit_code
-test_exit_code
+test_exit_code "Valid text file" 0 "$BINARY" "$TEST_DIR/test.txt"
+test_exit_code "Valid script file" 0 "$BINARY" "$TEST_DIR/test.sh"
+test_exit_code "Non-existent file" 2 "$BINARY" "/nonexistent/file.txt"
+test_exit_code "No arguments" 0 "$BINARY"
+test_exit_code "Multiple files" 0 "$BINARY" "$TEST_DIR/test.txt" "$TEST_DIR/test.sh"
+test_exit_code "Verbose mode" 0 "$BINARY" "-v" "$TEST_DIR/test.txt"
 
-test_output
-test_output
-test_output
+test_output "Output contains filename" "test.txt" "$BINARY" "$TEST_DIR/test.txt"
+test_output "Text file detection" "text" "$BINARY" "$TEST_DIR/test.txt"
+test_output "Script file detection" "script" "$BINARY" "$TEST_DIR/test.sh"
 
 echo
 echo "================================"

@@ -9,6 +9,8 @@ Fixed bugs with 'file' command argument parsing
 
 Added integration testing
 
+Fixed bug with exit codes being incorrect
+
 #### 10-8-25 v0.1.0
 Implemented pass-through connection with UNIX 'file' command
 
