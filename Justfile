@@ -1,6 +1,6 @@
 set shell := ["bash", "-cu"]
 
-install: test build
+install: integration-test
     @[ -f /usr/local/bin/yfile ] && echo "Removing existing installation..." && sudo rm -f /usr/local/bin/yfile || true
     @echo "Installing yfile to /usr/local/bin..."
     sudo install -m 755 build/yfile /usr/local/bin/yfile
@@ -22,6 +22,10 @@ clear-build-cache:
 test: check-deps clear-build-cache compile-yara lint
     go test -v ./...
 
+integration-test: test build
+    @chmod +x test/integration_test.sh
+    @./test/integration_test.sh
+
 lint:
     golangci-lint run ./...
     editorconfig-checker
@@ -40,7 +44,7 @@ get url:
     @go get "{{url}}"
     @go mod tidy
 
-release: build
+release: integration-test
     @mkdir -p ./build/release
     @cp ./build/yfile ./yfile
     @tar -cvzf build/release/yfile-linux-amd64.tar.gz ./yfile

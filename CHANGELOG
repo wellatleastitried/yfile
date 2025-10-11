@@ -1,9 +1,13 @@
-#### 10-9-25
+#### 10-9-25 v0.1.1
 Improved argument parsing for a more normal syntax and multi-file support
 
 Added more extensive testing
 
 Updated documentation and added versioning
+
+Fixed bugs with 'file' command argument parsing
+
+Added integration testing
 
 #### 10-8-25 v0.1.0
 Implemented pass-through connection with UNIX 'file' command
