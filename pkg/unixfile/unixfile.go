@@ -72,20 +72,21 @@ func commandArgsAreValid(commandArgs *string) bool {
     }
     return true
 }
-    
 
-func (c CommandData) Execute() string {
+func (c *CommandData) Execute() string {
     cmd := exec.Command(c.Name, c.FilePath)
     return execute(cmd)
 }
 
-func (c CommandDataWithArgs) Execute() string {
+func (c *CommandDataWithArgs) Execute() string {
     if c.Args == "" {
         fmt.Fprintln(os.Stderr, ErrNoArgumentsProvidedToFileArgsFlag)
         os.Exit(utils.ExitError)
     }
 
-    cmd := exec.Command(c.Name, c.Args, c.FilePath)
+    args := strings.Fields(c.Args)
+    args = append(args, c.FilePath)
+    cmd := exec.Command(c.Name, args...)
     return execute(cmd)
 }
 

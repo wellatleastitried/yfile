@@ -24,6 +24,7 @@ yfile version 1.0.0
 \> yfile example.md
 example.md: ASCII text
 File does not match common malware signatures.
+----------------------------------------------
 ```
 
 ### File Analysis (malicious file)
@@ -32,6 +33,7 @@ File does not match common malware signatures.
 test/lua_malware_sig.lua: ASCII text
 1 YARA matches:
   - Rule: LuaBot (Namespace: default)
+-------------------------------------
 ```
 
 ### Verbose File Analysis (malicious file)
@@ -41,6 +43,7 @@ test/testsignatures/lua_malware_sig.lua: ASCII text
 1 YARA matches:
   - Rule: LuaBot (Namespace: default)
     Tags: [MALW]
+---------------------------------------------------
 ```
 
 ### Verbose File Analysis (malicious file with multiple matches)
@@ -52,11 +55,14 @@ test/testsignatures/multiple.exe.txt: ASCII text
   - Rule: LuaBot (Namespace: default)
     Tags: [MALW]
   - Rule: php_anuna (Namespace: default)
+-------------------------------------------------------
 ```
 
 ### File Analysis with custom `file` arguments
 ```md
 \> yfile --file-args '-b -i' README.md
-TODO
+text/plain; charset=us-ascii
+File does not match common malware signatures.
+----------------------------------------------
 ```
 
