@@ -28,6 +28,6 @@ func splitLines(s string) []string {
 
 func ToJSON(fileOutput string, scanOutput string) string {
     // ToJSON not implemented yet
-    return fileOutput + "\n" + scanOutput
+    return "JSON output formatting has not been implemented yet, check back for v0.1.2!\nDefaulting to standard output:\n" + fileOutput + "\n" + scanOutput
 }
 
