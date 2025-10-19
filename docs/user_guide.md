@@ -9,4 +9,4 @@ This program can also be used as an API through other apps due to its handling o
 - 2: Error
 
 ## Example Output
-For multiple examples of output, please see the [examples doc](examples.md).
+For multiple examples of output, please see the [examples doc](example.md).

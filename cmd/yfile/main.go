@@ -9,6 +9,7 @@ import (
     "fmt"
     "os"
     "strings"
+    "sync"
 
     "github.com/wellatleastitried/yfile/pkg/argparse"
     "github.com/wellatleastitried/yfile/pkg/unixfile"
@@ -22,8 +23,8 @@ func main() {
     help := setBoolFlag("h", "help", "Show this help message and exit", false)
     verbose := setBoolFlag("v", "verbose", "Enable verbose output", false)
     version := setBoolFlag("", "version", "Show version information and exit", false)
-    json := setBoolFlag("j", "json", "Output results in JSON format", false)
     recurse := setBoolFlag("r", "recurse", "Recurse into directories when provided as input", false)
+    threads := setStringFlag("t", "threads", "Number of threads to use for processing files (min 1, default 6, max " + utils.CPUCountString() + ")", false, "8")
     fileCommandArgs := setStringFlag("f", "file-args", "Arguments to pass through to the `file` command (e.g. '-b -i')", false, "")
     fileCommandHelp := setBoolFlag("fh", "file-help", "Show help for the `file` command and exit", false)
 
@@ -46,7 +47,7 @@ func main() {
         os.Exit(utils.ExitError)
     }
 
-    exitcode := processFiles(files, fileCommandArgs, verbose, json)
+    exitcode := processFiles(files, fileCommandArgs, threads, verbose)
     os.Exit(exitcode)
 }
 
@@ -77,41 +78,70 @@ func displayVersion() {
     fmt.Printf("yfile version %s\n", utils.Version)
 }
 
-func processFiles(filePaths []string, fileCommandArgs *string, verbose , outputFormat *bool) int {
+// fileResult holds the output and exit code for a single file analysis
+type fileResult struct {
+    filePath    string
+    fileOutput  string
+    scanOutput  string
+    exitcode    int
+}
+
+func processFiles(filePaths []string, fileCommandArgs, numWorkers *string, verbose *bool) int {
     exitcode := utils.ExitOk
+
+    workers := utils.GetWorkerCount(numWorkers)
+
+    jobs := make(chan string, len(filePaths))
+    results := make(chan fileResult, len(filePaths))
+    var wg sync.WaitGroup
+    
+    for w := 0; w < workers; w++ {
+        wg.Add(1)
+        go func() {
+            defer wg.Done()
+            for path := range jobs {
+                fileOutput := unixfile.RunFileCommand(path, fileCommandArgs)
+                scanOutput, currentExitcode := scanning.AnalyzeFile(path, verbose)
+                
+                results <- fileResult{
+                    filePath:   path,
+                    fileOutput: fileOutput,
+                    scanOutput: scanOutput,
+                    exitcode:   currentExitcode,
+                }
+            }
+        }()
+    }
+    
     for _, filePath := range filePaths {
-        fileOutput := unixfile.RunFileCommand(filePath, fileCommandArgs)
-
-        var scanOutput string
-        var currentExitcode int
-        scanOutput, currentExitcode = scanning.AnalyzeFile(filePath, verbose)
-
-        if currentExitcode == utils.ExitError {
-            return currentExitcode
+        jobs <- filePath
+    }
+    close(jobs)
+    
+    go func() {
+        wg.Wait()
+        close(results)
+    }()
+    
+    for result := range results {
+        if result.exitcode == utils.ExitError {
+            return result.exitcode
         }
-
-        if currentExitcode == utils.ExitInfected {
+        
+        if result.exitcode == utils.ExitInfected {
             // Set exit code to infected if ANY single file is infected
             exitcode = utils.ExitInfected
         }
-
-        displayOutput(outputFormat, fileOutput, scanOutput)
-        displayDivider(fileOutput, scanOutput)
+        
+        displayOutput(result.fileOutput, result.scanOutput)
     }
-
+    
     return exitcode
 }
 
-func displayOutput(outputFormat *bool, fileOutput, scanOutput string) {
-    if *outputFormat == utils.FormatJSON {
-        // json output not yet implemented
-        fmt.Println(utils.ToJSON(fileOutput, scanOutput))
-    } else {
-            fmt.Printf("%s%s\n", fileOutput, scanOutput)
-    }
-}
+func displayOutput(fileOutput, scanOutput string) {
+    fmt.Printf("%s%s\n", fileOutput, scanOutput)
 
-func displayDivider(fileOutput, scanOutput string) {
     maxLen := utils.MaxLineLength(fileOutput, scanOutput)
     if maxLen > 0 {
         fmt.Println(strings.Repeat("-", maxLen))

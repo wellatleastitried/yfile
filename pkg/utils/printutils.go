@@ -4,11 +4,6 @@ import (
     "strings"
 )
 
-const (
-    FormatText = false
-    FormatJSON = true
-)
-
 func MaxLineLength(strings ...string) int {
     maxLen := 0
     for _, str := range strings {
@@ -24,10 +19,5 @@ func MaxLineLength(strings ...string) int {
 
 func splitLines(s string) []string {
     return strings.Split(s, "\n")
-}
-
-func ToJSON(fileOutput string, scanOutput string) string {
-    // ToJSON not implemented yet
-    return "JSON output formatting has not been implemented yet, check back for v0.1.2!\nDefaulting to standard output:\n" + fileOutput + "\n" + scanOutput
 }
 
