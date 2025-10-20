@@ -10,7 +10,7 @@ import (
 func TestSetBool(t *testing.T) {
     // Clear previous flags
     flags.getByShortName = make(map[string]Flag)
-    flags.getByLongName = make(map[string]Flag)
+    flags.getByExpandedName = make(map[string]Flag)
 
     errFlag, err := SetBool("", "", "An invalid flag", false)
     require.Nil(t, errFlag, "SetBool should return nil for invalid flag")
@@ -23,8 +23,8 @@ func TestSetBool(t *testing.T) {
 
     flag, exists := flags.getByShortName["-b"]
     require.True(t, exists, "Flag should be getByShortName in the flags map")
-    require.Equal(t, "-b", flag.ShortFormName, "Short form name should match")
-    require.Equal(t, "--bool", flag.LongFormName, "Long form name should match")
+    require.Equal(t, "-b", flag.ShortFlagName, "Short flag name should match")
+    require.Equal(t, "--bool", flag.ExpandedFlagName, "Long flag name should match")
     require.Equal(t, "A boolean flag", flag.Description, "Description should match")
     require.Equal(t, true, flag.Required, "Required status should match")
 
@@ -36,7 +36,7 @@ func TestSetBool(t *testing.T) {
 
 func TestSetString(t *testing.T) {
     // Clear previous flags
-    flags.getByLongName = make(map[string]Flag)
+    flags.getByExpandedName = make(map[string]Flag)
     defaultValues = make(map[any]string)
 
     errFlag, err := SetString("", "", "An invalid flag", false, "default")
@@ -48,10 +48,10 @@ func TestSetString(t *testing.T) {
     require.NotNil(t, stringFlag, "SetString should return a non-nil pointer")
     require.Equal(t, "", *stringFlag, "Default value of a string flag should be empty string")
 
-    flag, exists := flags.getByLongName["--string"]
+    flag, exists := flags.getByExpandedName["--string"]
     require.True(t, exists, "Flag should be stored in the flags map")
-    require.Equal(t, "-s", flag.ShortFormName, "Short form name should match")
-    require.Equal(t, "--string", flag.LongFormName, "Long form name should match")
+    require.Equal(t, "-s", flag.ShortFlagName, "Short form name should match")
+    require.Equal(t, "--string", flag.ExpandedFlagName, "Long form name should match")
     require.Equal(t, "A string flag", flag.Description, "Description should match")
     require.Equal(t, false, flag.Required, "Required status should match")
 
