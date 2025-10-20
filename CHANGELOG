@@ -1,3 +1,8 @@
+#### 10-19-25 v0.1.2
+Added support for multiple threads to process files in parallel
+
+Fixed mistake with incorrect filename in documentation
+
 #### 10-9-25 v0.1.1
 Improved argument parsing for a more normal syntax and multi-file support
 

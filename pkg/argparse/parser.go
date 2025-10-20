@@ -9,8 +9,8 @@ import (
 )
 
 type Flag struct {
-    ShortFormName string
-    LongFormName string
+    ShortFlagName string
+    ExpandedFlagName string
     Description string
     Required bool
     reference any
@@ -18,7 +18,7 @@ type Flag struct {
 
 type Flags struct {
     getByShortName map[string]Flag
-    getByLongName map[string]Flag
+    getByExpandedName map[string]Flag
 }
 
 var flags = &Flags{
@@ -34,55 +34,55 @@ var ErrNoFileProvided = errors.New("no file paths were provided as arguments")
 var ErrInvalidFlag = errors.New("invalid flag provided")
 var ErrDuplicateFlag = errors.New("a flag with the same short or long form name already exists")
 
-// shortForm can be an empty string if no short form is desired
-// longForm can be an empty string if no long form is desired
-// HOWEVER, at least one of shortForm or longForm must be provided, otherwise an error is returned
+// shortFlag can be an empty string if no short form is desired
+// expandedFlag can be an empty string if no long form is desired
+// HOWEVER, at least one of shortFlag or expandedFlag must be provided, otherwise an error is returned
 //
 // returns a pointer to the bool variable that will hold the flag's value after parsing
-func SetBool(shortForm string, longForm string, description string, required bool) (*bool, error) {
-    if shortForm == "" && longForm == "" {
+func SetBool(shortFlag string, expandedFlag string, description string, required bool) (*bool, error) {
+    if shortFlag == "" && expandedFlag == "" {
         return nil, ErrInvalidFlag
     }
 
-    if shortForm != "" {
-        shortForm = "-" + shortForm
+    if shortFlag != "" {
+        shortFlag = "-" + shortFlag
     }
-    if longForm != "" {
-        longForm = "--" + longForm
+    if expandedFlag != "" {
+        expandedFlag = "--" + expandedFlag
     }
     flag := Flag{
-        ShortFormName: shortForm,
-        LongFormName: longForm,
+        ShortFlagName: shortFlag,
+        ExpandedFlagName: expandedFlag,
         Description: description,
         Required: required,
         reference: new(bool),
     }
 
-    flags.getByShortName[shortForm] = flag
-    flags.getByLongName[longForm] = flag
+    flags.getByShortName[shortFlag] = flag
+    flags.getByExpandedName[expandedFlag] = flag
     return flag.reference.(*bool), nil
 }
 
-// shortForm can be an empty string if no short form is desired
-// longForm can be an empty string if no long form is desired
-// HOWEVER, at least one of shortForm or longForm must be provided, otherwise an error is returned
+// shortFlag can be an empty string if no short form is desired
+// expandedFlag can be an empty string if no long form is desired
+// HOWEVER, at least one of shortFlag or expandedFlag must be provided, otherwise an error is returned
 //
 // returns a pointer to the string variable that will hold the flag's value after parsing
-func SetString(shortForm string, longForm string, description string, required bool, defaultValue string) (*string, error) {
-    if shortForm == "" && longForm == "" {
+func SetString(shortFlag string, expandedFlag string, description string, required bool, defaultValue string) (*string, error) {
+    if shortFlag == "" && expandedFlag == "" {
         return nil, ErrInvalidFlag
     }
 
-    if shortForm != "" {
-        shortForm = "-" + shortForm
+    if shortFlag != "" {
+        shortFlag = "-" + shortFlag
     }
-    if longForm != "" {
-        longForm = "--" + longForm
+    if expandedFlag != "" {
+        expandedFlag = "--" + expandedFlag
     }
 
     flag := Flag{
-        ShortFormName: shortForm,
-        LongFormName: longForm,
+        ShortFlagName: shortFlag,
+        ExpandedFlagName: expandedFlag,
         Description: description,
         Required: required,
         reference: new(string),
@@ -94,8 +94,8 @@ func SetString(shortForm string, longForm string, description string, required b
     }
 
     defaultValues[flag.reference] = defaultValue
-    flags.getByShortName[shortForm] = flag
-    flags.getByLongName[longForm] = flag
+    flags.getByShortName[shortFlag] = flag
+    flags.getByExpandedName[expandedFlag] = flag
     return flag.reference.(*string), nil
 }
 
@@ -103,7 +103,7 @@ func (f *Flags) contains(arg string) (Flag, bool) {
     if flag, exists := f.getByShortName[arg]; exists {
         return flag, true
     }
-    if flag, exists := f.getByLongName[arg]; exists {
+    if flag, exists := f.getByExpandedName[arg]; exists {
         return flag, true
     }
 
@@ -111,10 +111,10 @@ func (f *Flags) contains(arg string) (Flag, bool) {
 }
 
 func (f *Flags) checkDuplicate(flag Flag) error {
-    if _, result := f.contains(flag.ShortFormName); result {
+    if _, result := f.contains(flag.ShortFlagName); result {
         return ErrDuplicateFlag
     }
-    if _, result := f.contains(flag.LongFormName); result {
+    if _, result := f.contains(flag.ExpandedFlagName); result {
         return ErrDuplicateFlag
     }
     return nil
@@ -176,10 +176,10 @@ func PrintUsage() {
         if flag.Required {
             req = " (required)"
         }
-        if defaultValue, exists := defaultValues[flag.ShortFormName]; exists && defaultValue != "" {
+        if defaultValue, exists := defaultValues[flag.ShortFlagName]; exists && defaultValue != "" {
             def = fmt.Sprintf(" (default: %s)", defaultValue)
         }
-        fmt.Fprintf(os.Stdout, "  %-4s %-20s %s%s%s\n", flag.ShortFormName, flag.LongFormName, flag.Description, req, def)
+        fmt.Fprintf(os.Stdout, "  %-4s %-20s %s%s%s\n", flag.ShortFlagName, flag.ExpandedFlagName, flag.Description, req, def)
     }
 }
 
