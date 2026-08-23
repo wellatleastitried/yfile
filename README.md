@@ -29,6 +29,7 @@ go install github.com/wellatleastitried/yfile/cmd/yfile@latest
 1. Clone the repository with submodules:
 ```bash
 git clone --recurse-submodules https://github.com/wellatleastitried/yfile.git
+cd yfile
 ```
 
 2. Run `just`
