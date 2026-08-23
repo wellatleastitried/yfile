@@ -1,3 +1,6 @@
+#### 08-22-26 v0.1.3
+Added automatic patching for submodule to fix build build errors
+
 #### 10-19-25 v0.1.2
 Added support for multiple threads to process files in parallel
 
