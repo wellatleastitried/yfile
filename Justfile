@@ -1,5 +1,10 @@
 set shell := ["bash", "-cu"]
 
+apply-patches:
+    @echo "Applying submodule patches..."
+    @cd rules/yara-rules && git apply ../../patches/yara-rules.patch && cd ../..
+    @echo "Patches applied successfully!"
+
 install: test-all
     @[ -f /usr/local/bin/yfile ] && echo "Removing existing installation..." && sudo rm -f /usr/local/bin/yfile || true
     @echo "Installing yfile to /usr/local/bin..."
@@ -10,7 +15,7 @@ uninstall:
     @sudo rm -f /usr/local/bin/yfile
     @echo "yfile uninstalled from /usr/local/bin/yfile"
 
-build: check-deps clear-build-cache compile-yara
+build: check-deps clear-build-cache apply-patches compile-yara
     go build -o build/yfile ./cmd/yfile
 
 compile-yara:
