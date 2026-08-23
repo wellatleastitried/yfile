@@ -1,8 +1,12 @@
 set shell := ["bash", "-cu"]
 
+# Apply patches to submodules
 apply-patches:
     @echo "Applying submodule patches..."
-    @cd rules/yara-rules && git apply ../../patches/yara-rules.patch && cd ../..
+    @cd rules/yara-rules && \
+        (git apply --reverse --check ../../patches/yara-rules.patch >/dev/null 2>&1 && echo "Patch already applied") || \
+        git apply ../../patches/yara-rules.patch && \
+        cd ../..
     @echo "Patches applied successfully!"
 
 install: test-all
